@@ -134,7 +134,7 @@ def main():
 
             if args.strip_realm:
                 username = username.split('@')[0]
-            elif args.strip_domain and '\\' in username:
+            if args.strip_domain and '\\' in username:
                 username = username.split('\\')[1]
 
             if isinstance(conn, Connection):
