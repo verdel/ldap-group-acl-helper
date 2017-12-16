@@ -128,7 +128,11 @@ def main():
 
     while 1:
         try:
-            input = sys.stdin.readline().split()
+            input = sys.stdin.readline()
+            if len(input) == 0:
+                raise RuntimeError
+            else:
+                input = input.split()
         except:
             if isinstance(conn, Connection):
                 if conn.bound:
