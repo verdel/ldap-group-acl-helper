@@ -116,17 +116,20 @@ def main():
         bindpasswd = ''
 
     if bindpasswd:
-        conn = get_ldap_connection(server=args.server,
-                                   port=args.port,
-                                   ssl=args.ssl,
-                                   timeout=int(args.timeout),
-                                   binddn=args.binddn,
-                                   bindpasswd=bindpasswd)
+        try:
+            conn = get_ldap_connection(server=args.server,
+                                       port=args.port,
+                                       ssl=args.ssl,
+                                       timeout=int(args.timeout),
+                                       binddn=args.binddn,
+                                       bindpasswd=bindpasswd)
+        except:
+            pass
 
     while 1:
         try:
             input = sys.stdin.readline().split()
-        except KeyboardInterrupt:
+        except:
             if isinstance(conn, Connection):
                 if conn.bound:
                     conn.unbind()
