@@ -32,7 +32,7 @@ def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filte
 
     try:
         connection.search(search_base=basedn,
-                          search_filter='(&({}))'.format(user_filter.replace('%u', username)),
+                          search_filter=u'(&({}))'.format(user_filter.replace('%u', username.decode('utf-8'))),
                           search_scope=SUBTREE,
                           time_limit=timelimit,
                           get_operational_attributes=True)
@@ -40,12 +40,16 @@ def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filte
         if len(connection.response) > 0:
             user = connection.response[0]['dn']
             connection.search(search_base=basedn,
-                              search_filter='{}'.format(group_filter.replace('%u', user).replace('%g', group)),
+                              search_filter=group_filter.replace('%u', user).replace('%g', group.decode('utf-8')),
                               search_scope=SUBTREE,
                               time_limit=timelimit,
                               get_operational_attributes=True)
             if len(connection.response) > 0:
-                print('OK tag="{}"'.format(group))
+                for item in connection.response:
+                    if 'dn' in item:
+                        print(u'OK tag="{}"'.format(group.decode('utf-8')))
+                        return
+                print('ERR')
             else:
                 print('ERR')
         else:
