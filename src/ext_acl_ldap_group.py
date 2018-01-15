@@ -140,6 +140,7 @@ def main():
             if isinstance(conn, Connection):
                 if conn.bound:
                     conn.unbind()
+            break
             sys.exit()
 
         try:
@@ -170,6 +171,8 @@ def main():
 
             else:
                 print('BH message="LDAP connection could not be established"')
+                break
+                sys.exit()
 
             sys.stdout.flush()
         except:
