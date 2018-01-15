@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE
+from ldap3.core.exceptions import LDAPSocketSendError
 import argparse
 from os import path
 import sys
@@ -55,6 +56,9 @@ def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filte
                 print('ERR')
         else:
             print('ERR')
+
+    except LDAPSocketSendError as exc:
+        raise exc
 
     except Exception as exc:
         print('BH message={}({})'.format(type(exc).__name__, exc))
@@ -160,14 +164,26 @@ def main():
                                                timeout=int(args.timeout),
                                                binddn=args.binddn,
                                                bindpasswd=bindpasswd)
+
                 if conn.bound:
-                    get_ldap_info(connection=conn,
-                                  timelimit=int(args.timelimit),
-                                  basedn=args.basedn,
-                                  username=username,
-                                  user_filter=args.user_filter,
-                                  group=group,
-                                  group_filter=args.group_filter)
+                    try:
+                        get_ldap_info(connection=conn,
+                                      timelimit=int(args.timelimit),
+                                      basedn=args.basedn,
+                                      username=username,
+                                      user_filter=args.user_filter,
+                                      group=group,
+                                      group_filter=args.group_filter)
+
+                    except Exception as exc:
+                        print('BH message={}({})'.format(type(exc).__name__, exc))
+                        conn.unbind()
+                        conn = get_ldap_connection(server=args.server,
+                                                   port=args.port,
+                                                   ssl=args.ssl,
+                                                   timeout=int(args.timeout),
+                                                   binddn=args.binddn,
+                                                   bindpasswd=bindpasswd)
 
             else:
                 print('BH message="LDAP connection could not be established"')
@@ -175,6 +191,7 @@ def main():
                 sys.exit()
 
             sys.stdout.flush()
+
         except:
             continue
 
