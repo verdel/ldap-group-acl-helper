@@ -155,7 +155,7 @@ def main():
                 if conn.closed:
                     conn = get_ldap_connection(server=args.server,
                                                port=args.port,
-                                               tls=args.tls,
+                                               ssl=args.ssl,
                                                timeout=int(args.timeout),
                                                binddn=args.binddn,
                                                bindpasswd=bindpasswd)
