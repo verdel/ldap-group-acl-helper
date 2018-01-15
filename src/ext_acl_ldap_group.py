@@ -126,6 +126,8 @@ def main():
                                        bindpasswd=bindpasswd)
         except:
             pass
+    else:
+        sys.exit()
 
     while 1:
         try:
