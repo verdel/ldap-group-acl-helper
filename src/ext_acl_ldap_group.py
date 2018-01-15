@@ -1,4 +1,4 @@
-#!/usr/bin/env python600,
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE
