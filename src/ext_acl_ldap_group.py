@@ -14,7 +14,7 @@ def get_ldap_connection(server=[], port='', ssl=False, timeout=0, binddn='', bin
                                  active=3,
                                  exhaust=60)
         conn = Connection(server_pool,
-                          pool_keepalive=600,
+                          pool_keepalive=60,
                           auto_bind=AUTO_BIND_NO_TLS,
                           read_only=True,
                           receive_timeout=timeout,
