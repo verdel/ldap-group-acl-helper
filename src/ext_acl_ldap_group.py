@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE
-from ldap3.core.exceptions import LDAPSocketSendError
+from ldap3.core.exceptions import LDAPCommunicationError
 import argparse
 from os import path
 import sys
@@ -57,7 +57,7 @@ def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filte
         else:
             print('ERR')
 
-    except LDAPSocketSendError as exc:
+    except LDAPCommunicationError as exc:
         raise exc
 
     except Exception as exc:
@@ -177,13 +177,9 @@ def main():
 
                     except Exception as exc:
                         print('BH message={}({})'.format(type(exc).__name__, exc))
-                        conn.unbind()
-                        conn = get_ldap_connection(server=args.server,
-                                                   port=args.port,
-                                                   ssl=args.ssl,
-                                                   timeout=int(args.timeout),
-                                                   binddn=args.binddn,
-                                                   bindpasswd=bindpasswd)
+                        conn.strategy.close()
+                        if conn.closed:
+                            conn.bind()
 
             else:
                 print('BH message="LDAP connection could not be established"')
