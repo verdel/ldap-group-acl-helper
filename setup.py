@@ -30,7 +30,7 @@ setup(
     author_email='valeksandrov@me.com',
     url='https://github.com/verdel/ldap-group-acl-helper',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
-    entry_points={'console_scripts': ['ext_acl_ldap_group=src.ext_acl_ldap_group:main', ], },
+    entry_points={'console_scripts': ['ext_acl_ldap_group=src.ext_acl_ldap_group:main', 'ext_acl_ldap_group_async=src.ext_acl_ldap_group_async:main'], },
     include_package_data=True,
     install_requires=requirements,
     keywords='squid external acl ldap group',

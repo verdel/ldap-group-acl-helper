@@ -6,7 +6,8 @@ ldap-group-acl-helper - Squid external acl ldap group helper
 What is this?
 *************
 ``ldap-group-acl-helper`` provides an executable called ``ext_acl_ldap_group``
-
+and ``ext_acl_ldap_group_async`` for concurrent squid behavior. Syntax and
+options for ``ext_acl_ldap_group_async`` exact the same as for ``ext_acl_ldap_group``
 
 Installation
 ************
@@ -27,8 +28,8 @@ Installation
   cd ldap-group-acl-helper
   python setup.py install
 
-as a result, the ``ext_acl_ldap_group`` executable will be installed into a system ``bin``
-directory
+as a result, the ``ext_acl_ldap_group`` and ``ext_acl_ldap_group_async`` executable will be installed into a
+system ``bin`` directory
 
 Usage
 -----
