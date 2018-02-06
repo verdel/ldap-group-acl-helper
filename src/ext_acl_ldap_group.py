@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE
-from ldap3.core.exceptions import LDAPCommunicationError
 import argparse
 from os import path
 import sys
@@ -28,8 +27,7 @@ def get_ldap_connection(server=[], port='', ssl=False, timeout=0, binddn='', bin
 
 def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filter='', group='', group_filter=''):
     if not connection:
-        print('BH message="LDAP connection could not be established"')
-        return False
+        return 'BH message="LDAP connection could not be established"'
 
     try:
         connection.search(search_base=basedn,
@@ -48,19 +46,16 @@ def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filte
             if len(connection.response) > 0:
                 for item in connection.response:
                     if 'dn' in item:
-                        print(u'OK tag="{}"'.format(group.decode('utf-8')))
+                        return u'OK tag="{}"'.format(group.decode('utf-8'))
                         return
-                print('ERR')
+                return 'ERR'
             else:
-                print('ERR')
+                return 'ERR'
         else:
-            print('ERR')
-
-    except LDAPCommunicationError as exc:
-        raise exc
+            return 'ERR'
 
     except Exception as exc:
-        print('BH message={}({})'.format(type(exc).__name__, exc))
+        return 'BH message={}({})'.format(type(exc).__name__, exc)
 
 
 def create_cli():
@@ -166,13 +161,13 @@ def main():
 
                 if conn.bound:
                     try:
-                        get_ldap_info(connection=conn,
-                                      timelimit=int(args.timelimit),
-                                      basedn=args.basedn,
-                                      username=username,
-                                      user_filter=args.user_filter,
-                                      group=group,
-                                      group_filter=args.group_filter)
+                        search_result = get_ldap_info(connection=conn,
+                                                      timelimit=int(args.timelimit),
+                                                      basedn=args.basedn,
+                                                      username=username,
+                                                      user_filter=args.user_filter,
+                                                      group=group,
+                                                      group_filter=args.group_filter)
 
                     except Exception as exc:
                         print('BH message={}({})'.format(type(exc).__name__, exc))
@@ -180,11 +175,13 @@ def main():
                         if conn.closed:
                             conn.bind()
 
+                    else:
+                        print(search_result)
+
             else:
                 print('BH message="LDAP connection could not be established"')
                 break
                 sys.exit()
-
             sys.stdout.flush()
 
         except:
