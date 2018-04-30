@@ -1,10 +1,78 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE
+from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE, RESTARTABLE
 import argparse
 from os import path
 import sys
+import signal
+
+
+def signal_handler(signal, frame):
+    sys.exit(0)
+
+
+def consumer(args, bindpasswd, conn):
+    while True:
+        try:
+            input = sys.stdin.readline()
+            if len(input) == 0:
+                raise RuntimeError
+            else:
+                input = input.split()
+
+        except Exception as exc:
+            if isinstance(conn, Connection):
+                if conn.bound:
+                    conn.unbind()
+            break
+            sys.exit()
+
+        try:
+            id = input[0]
+            username = input[1]
+            group = input[2]
+
+            if args.strip_realm:
+                username = username.split('@')[0]
+            if args.strip_domain and '\\' in username:
+                username = username.split('\\')[1]
+
+            if isinstance(conn, Connection):
+                if conn.closed:
+                    conn = get_ldap_connection(server=args.server,
+                                               port=args.port,
+                                               ssl=args.ssl,
+                                               timeout=int(args.timeout),
+                                               binddn=args.binddn,
+                                               bindpasswd=bindpasswd)
+
+                if conn.bound:
+                    try:
+                        search_result = get_ldap_info(connection=conn,
+                                                      timelimit=int(args.timelimit),
+                                                      basedn=args.basedn,
+                                                      username=username,
+                                                      user_filter=args.user_filter,
+                                                      group=group,
+                                                      group_filter=args.group_filter)
+
+                    except Exception as exc:
+                        print('{} BH message={}({})'.format(id, type(exc).__name__, exc))
+                        conn.strategy.close()
+                        if conn.closed:
+                            conn.bind()
+
+                    else:
+                        print('{} {}'.format(id, search_result))
+
+            else:
+                print('{} BH message="LDAP connection could not be established"'.format(id))
+                break
+                sys.exit()
+            sys.stdout.flush()
+        except:
+            continue
 
 
 def get_ldap_connection(server=[], port='', ssl=False, timeout=0, binddn='', bindpasswd=''):
@@ -18,6 +86,7 @@ def get_ldap_connection(server=[], port='', ssl=False, timeout=0, binddn='', bin
                           read_only=True,
                           receive_timeout=timeout,
                           check_names=True,
+                          client_strategy=RESTARTABLE,
                           user=binddn, password=bindpasswd)
     except Exception as exc:
         print('ext_acl_ldap_group LDAP bind error {}({})'.format(type(exc).__name__, exc))
@@ -31,7 +100,7 @@ def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filte
 
     try:
         connection.search(search_base=basedn,
-                          search_filter=u'(&({}))'.format(user_filter.replace('%u', username.decode('utf-8'))),
+                          search_filter=u'(&({}))'.format(user_filter.replace('%u', username)),
                           search_scope=SUBTREE,
                           time_limit=timelimit,
                           get_operational_attributes=True)
@@ -39,14 +108,14 @@ def get_ldap_info(connection='', timelimit=0, basedn='', username='', user_filte
         if len(connection.response) > 0:
             user = connection.response[0]['dn']
             connection.search(search_base=basedn,
-                              search_filter=group_filter.replace('%u', user).replace('%g', group.decode('utf-8')),
+                              search_filter=group_filter.replace('%u', user).replace('%g', group),
                               search_scope=SUBTREE,
                               time_limit=timelimit,
                               get_operational_attributes=True)
             if len(connection.response) > 0:
                 for item in connection.response:
                     if 'dn' in item:
-                        return u'OK tag="{}"'.format(group.decode('utf-8'))
+                        return u'OK tag="{}"'.format(group)
                         return
                 return 'ERR'
             else:
@@ -90,6 +159,7 @@ def create_cli():
 
 
 def main():
+    signal.signal(signal.SIGINT, signal_handler)
     parser = create_cli()
     if len(sys.argv) == 1:
         parser.print_help()
@@ -127,65 +197,7 @@ def main():
     else:
         sys.exit()
 
-    while 1:
-        try:
-            input = sys.stdin.readline()
-            if len(input) == 0:
-                raise RuntimeError
-            else:
-                input = input.split()
-        except:
-            if isinstance(conn, Connection):
-                if conn.bound:
-                    conn.unbind()
-            break
-            sys.exit()
-
-        try:
-            username = input[0]
-            group = input[1]
-
-            if args.strip_realm:
-                username = username.split('@')[0]
-            if args.strip_domain and '\\' in username:
-                username = username.split('\\')[1]
-
-            if isinstance(conn, Connection):
-                if conn.closed:
-                    conn = get_ldap_connection(server=args.server,
-                                               port=args.port,
-                                               ssl=args.ssl,
-                                               timeout=int(args.timeout),
-                                               binddn=args.binddn,
-                                               bindpasswd=bindpasswd)
-
-                if conn.bound:
-                    try:
-                        search_result = get_ldap_info(connection=conn,
-                                                      timelimit=int(args.timelimit),
-                                                      basedn=args.basedn,
-                                                      username=username,
-                                                      user_filter=args.user_filter,
-                                                      group=group,
-                                                      group_filter=args.group_filter)
-
-                    except Exception as exc:
-                        print('BH message={}({})'.format(type(exc).__name__, exc))
-                        conn.strategy.close()
-                        if conn.closed:
-                            conn.bind()
-
-                    else:
-                        print(search_result)
-
-            else:
-                print('BH message="LDAP connection could not be established"')
-                break
-                sys.exit()
-            sys.stdout.flush()
-
-        except:
-            continue
+    consumer(args, bindpasswd, conn)
 
 
 if __name__ == '__main__':
