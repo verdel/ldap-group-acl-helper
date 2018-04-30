@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE
+from ldap3 import Server, ServerPool, Connection, FIRST, AUTO_BIND_NO_TLS, SUBTREE, RESTARTABLE
 import argparse
 from os import path
 import sys
@@ -94,6 +94,7 @@ def get_ldap_connection(server=[], port='', ssl=False, timeout=0, binddn='', bin
                           read_only=True,
                           receive_timeout=timeout,
                           check_names=True,
+                          client_strategy=RESTARTABLE,
                           user=binddn, password=bindpasswd)
     except Exception as exc:
         print('ext_acl_ldap_group LDAP bind error {}({})'.format(type(exc).__name__, exc))
